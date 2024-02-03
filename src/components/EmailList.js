@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import "./EmailList.css"
 import { Checkbox, IconButton } from '@mui/material';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
@@ -13,8 +13,29 @@ import Section from './Section';
 import PeopleIcon from '@mui/icons-material/People';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import EmailRow from './EmailRow';
+import { db } from './firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 function EmailList() {
+
+  const [emails, setEmails] = useState([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'emails'), orderBy('timestamp', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setEmails(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          data: doc.data(),
+        }))
+      );
+    });
+
+    // Cleanup the listener when the component unmounts
+    return () => unsubscribe();
+  }, []);
+
   return (
     <div className='emailList'>
       <div className='emailList__settings'>
@@ -54,20 +75,19 @@ function EmailList() {
         <Section Icon={LocalOfferIcon} title='Promotions' color='green' />
       </div>
       <div className='emailList__list'>
-        <EmailRow 
-          title="Twitch"
-          subject="Whats Up World!"
-          description="This one is test drive"
-          time="10pm"
+        {emails.map(({ id, data: { to, subject, message, timestamp}}) => (
+          <EmailRow
+            id = {id}
+            key={id}
+            title={to}
+            subject={subject}
+            description={message}
+            time={new Date(timestamp?.seconds * 1000).toUTCString()} 
+          />
+        ))}
+        
 
-        />
-        <EmailRow 
-          title="Twitch"
-          subject="Whats Up World!"
-          description="This one is test drive"
-          time="10pm"
-
-        />
+        
       </div>
     </div>
   )

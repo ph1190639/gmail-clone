@@ -5,20 +5,30 @@ import { Button } from '@mui/material';
 import {useForm} from "react-hook-form"
 import { closeSendMessage } from '../features/mailSlice';
 import { useDispatch } from 'react-redux';
-
+import { db } from './firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 function SendMail() {
 
-  const {register, handleSubmit, reset} = useForm();
+  const {register, handleSubmit } = useForm();
   const dispatch = useDispatch();
 
-  const onSubmit = (data) => {
-    console.log('Form Data:', data);
-    
+  const onSubmit = async (formData) => {
+    console.log(formData);
+    try {
+      const emailsCollection = collection(db, 'emails');
+      await addDoc(emailsCollection, {
+        to: formData.to,
+        subject: formData.subject,
+        message: formData.message,
+        timestamp: serverTimestamp(),
+      });
 
-
-    reset();
-  }
+      dispatch(closeSendMessage())
+    } catch (error) {
+      console.error('Error adding document: ', error);
+    }
+  };
   
 
   return (
