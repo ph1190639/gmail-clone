@@ -15,21 +15,26 @@ import { auth } from './components/firebase';
 
 function App() {
 
-  const sendMessageIsOpen =useSelector(selectSendMessageIsOpen);
+  
+
+
   const user = useSelector(selectUser);
+  const sendMessageIsOpen =useSelector(selectSendMessageIsOpen);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    auth.onAuthStateChanged(user => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
         dispatch(login({
           displayName: user.displayName,
           email: user.email,
           photoUrl: user.photoURL
-        }))
+        }));
       }
     });
-  }, [dispatch]);
+  
+    return () => unsubscribe(); // Cleanup the subscription on component unmount
+  }, [dispatch])
 
   return (
     <Router>
@@ -37,21 +42,21 @@ function App() {
         <Login />
       ) : (
         <div className="App">
-        <Header />
+          <Header />
 
-        <div className='app__body'>
-          <Sidebar/>
-          <Routes>
-            <Route path='/mail' element={<Mail/>} />
+          <div className='app__body'>
+            <Sidebar/>
+            <Routes>
+              <Route path='/mail' element={<Mail/>} />
             
-            <Route path='/' element={<EmailList/>} />
+              <Route path='/' element={<EmailList/>} />
               
             
-          </Routes>
+            </Routes>
       
+          </div>
+          {sendMessageIsOpen && <SendMail/>} 
         </div>
-        {sendMessageIsOpen && <SendMail/>} 
-      </div>
 
       )}
       
